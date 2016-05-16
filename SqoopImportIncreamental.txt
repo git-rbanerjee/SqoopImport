@@ -1,0 +1,78 @@
+######################################################################
+This file contains sample example to do a increamemtal import using sqoop from RDBMS to HIVE
+
+1. Using primary key
+2. Using lastmodified date
+######################################################################
+
+--------------------------------
+Lets first create a simple table & load sample data
+--------------------------------
+create schema sqoop;
+use sqoop;
+
+CREATE TABLE tutorials_tbl(
+   tutorial_id INT NOT NULL AUTO_INCREMENT,
+   tutorial_title VARCHAR(100) NOT NULL,
+   tutorial_author VARCHAR(40) NOT NULL,
+   submission_date DATETIME,
+   PRIMARY KEY ( tutorial_id )
+);
+
+INSERT INTO tutorials_tbl (tutorial_title, tutorial_author, submission_date) VALUES ("Learn PHP", "R Banerjee", NOW());
+INSERT INTO tutorials_tbl (tutorial_title, tutorial_author, submission_date) VALUES ("Learn Java", "CodeR", NOW());
+
+--------------------------------------
+OK, so lets begin
+--------------------------------------
+
+sqoop list-tables \
+--connect jdbc:mysql://localhost/sqoop \
+--username root -P
+
+# to list table
+sqoop list-tables --driver com.mysql.jdbc.Driver --connect jdbc:mysql://localhost/sqoop --username root -P
+
+# just a sample to import a table
+
+sqoop job --create myjob1 --import \
+--driver com.mysql.jdbc.Driver \
+--connect jdbc:mysql://localhost/userdb \
+--username root \
+--table tutorial_id --m 1 \
+-P
+
+
+
+-----------------------------------------
+Now , Sample increamental import using primary key
+-----------------------------------------
+
+sqoop job --create myjob -- import \
+--driver com.mysql.jdbc.Driver \
+--connect jdbc:mysql://localhost/sqoop \
+--table tutorials_tbl \
+--hive-import \
+--hive-table tutorials_tbl_hive \
+--check-column tutorial_id \
+--incremental append \
+--last-value 0 \
+--username root \
+--m 1 \
+-P
+-----------------------------------------
+Now , Sample increamental import using timestamp
+-----------------------------------------
+
+sqoop job --create myjob1 -- import \
+--driver com.mysql.jdbc.Driver \
+--connect jdbc:mysql://localhost/sqoop \
+--table tutorials_tbl \
+--hive-import \
+--hive-table tutorials_tbl_hive1 \
+--check-column submission_date \
+--incremental lastmodified \
+--last-value '1990-01-01' \
+--username root \
+--m 1 \
+-P
